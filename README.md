@@ -7,8 +7,8 @@ Model equity and generate spreadsheets.
 1. `cargo run`
 
 ## TODO
-- [*] RSUs
-- [*] PSP
-- [*] Options
+- [x] RSUs
+- [x] PSP
+- [x] Options
 - [ ] Recognize vesting start date
 - [ ] Add "projected" future equity
