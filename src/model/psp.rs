@@ -19,10 +19,10 @@ pub struct PreferredStockPrice {
 
 impl PreferredStockPrice {
     pub fn new(values: Vec<PreferredStockPriceValuation>) -> PreferredStockPrice {
-        let mut sorted = values.clone();
-        sorted.sort_by(|a, b| a.date.cmp(&b.date));
+        let mut values = values.clone();
+        values.sort_by(|a, b| a.date.cmp(&b.date));
 
-        PreferredStockPrice { values: sorted }
+        PreferredStockPrice { values }
     }
 
     pub fn value_on(&self, date: &NaiveDate) -> i32 {

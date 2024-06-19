@@ -14,6 +14,7 @@ impl RestrictedStockUnitValue {
     }
 }
 
+#[derive(Clone)]
 pub struct RestrictedStockUnitVestingEvent {
     pub date: NaiveDate,
     pub number: i32,
@@ -31,6 +32,8 @@ pub struct RestrictedStockUnitVestingSchedule {
 
 impl RestrictedStockUnitVestingSchedule {
     pub fn new(events: Vec<RestrictedStockUnitVestingEvent>) -> RestrictedStockUnitVestingSchedule {
+        let mut events = events.clone();
+        events.sort_by(|a, b| a.date.cmp(&b.date));
         RestrictedStockUnitVestingSchedule { events }
     }
 }
