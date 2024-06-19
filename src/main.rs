@@ -1,75 +1,10 @@
-use chrono::{format, Days, NaiveDate};
+use chrono::{Days, NaiveDate};
 
+mod model;
 mod portfolio;
 
-struct RestrictedStockUnitValue {
-    grant_price_cents: i32,
-    total_value_cents: i32,
-}
-
-struct RestrictedStockUnitVestingEvent {
-    date: NaiveDate,
-    number: i32,
-}
-
-struct RestrictedStockUnitVestingSchedule {
-    events: Vec<RestrictedStockUnitVestingEvent>,
-}
-
-struct RestrictedStockUnitGrant {
-    name: String,
-    granted_on: NaiveDate,
-    value: RestrictedStockUnitValue,
-    vesting_schedule: RestrictedStockUnitVestingSchedule,
-}
-
-impl RestrictedStockUnitGrant {
-    fn actual_total_value(&self) -> i32 {
-        self.vesting_schedule
-            .events
-            .iter()
-            .map(|event| event.number * self.value.grant_price_cents)
-            .sum()
-    }
-
-    fn actual_total_units(&self) -> i32 {
-        self.vesting_schedule
-            .events
-            .iter()
-            .map(|event| event.number)
-            .sum()
-    }
-}
-
-#[derive(Debug, Clone)]
-struct PreferredStockPriceValuation {
-    date: NaiveDate,
-    value_cents: i32,
-}
-
-#[derive(Debug)]
-struct PreferredStockPrice {
-    values: Vec<PreferredStockPriceValuation>,
-}
-
-impl PreferredStockPrice {
-    fn new(values: Vec<PreferredStockPriceValuation>) -> PreferredStockPrice {
-        let mut sorted = values.clone();
-        sorted.sort_by(|a, b| a.date.cmp(&b.date));
-
-        PreferredStockPrice { values: sorted }
-    }
-
-    fn value_on(&self, date: &NaiveDate) -> i32 {
-        // The first valuation after `date`
-        self.values
-            .iter()
-            .take_while(|valuation| &valuation.date <= date)
-            .last()
-            .expect(&format!("No valuation found for {date}"))
-            .value_cents
-    }
-}
+use model::psp::*;
+use model::rsu::*;
 
 struct ValuationItem {
     date: NaiveDate,
