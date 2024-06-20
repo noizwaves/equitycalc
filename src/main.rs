@@ -40,19 +40,19 @@ impl Valuation {
         option_grants: &Vec<OptionGrant>,
         rsu_grants: &Vec<RestrictedStockUnitGrant>,
     ) -> Valuation {
-        // Find the first grant date
+        // When vesting starts
         let start_date = rsu_grants
             .iter()
-            .map(|rsu_grant| rsu_grant.granted_on)
+            .map(|rsu_grant| rsu_grant.vesting_schedule.commences_on)
             .chain(
                 option_grants
                     .iter()
-                    .map(|option_grant| option_grant.granted_on),
+                    .map(|option_grant| option_grant.vesting_schedule.commences_on),
             )
             .min()
             .unwrap();
 
-        // Find the last vesting date
+        // When vested
         let end_date = rsu_grants
             .iter()
             .map(|rsu_grant| rsu_grant.vesting_schedule.events.last().unwrap().date)

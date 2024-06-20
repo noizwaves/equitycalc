@@ -27,14 +27,21 @@ impl RestrictedStockUnitVestingEvent {
 }
 
 pub struct RestrictedStockUnitVestingSchedule {
+    pub commences_on: NaiveDate,
     pub events: Vec<RestrictedStockUnitVestingEvent>,
 }
 
 impl RestrictedStockUnitVestingSchedule {
-    pub fn new(events: Vec<RestrictedStockUnitVestingEvent>) -> RestrictedStockUnitVestingSchedule {
+    pub fn new(
+        commences_on: NaiveDate,
+        events: Vec<RestrictedStockUnitVestingEvent>,
+    ) -> RestrictedStockUnitVestingSchedule {
         let mut events = events.clone();
         events.sort_by(|a, b| a.date.cmp(&b.date));
-        RestrictedStockUnitVestingSchedule { events }
+        RestrictedStockUnitVestingSchedule {
+            commences_on,
+            events,
+        }
     }
 }
 

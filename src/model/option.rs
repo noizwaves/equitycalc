@@ -27,14 +27,21 @@ impl OptionGrantVestingEvent {
 }
 
 pub struct OptionGrantVestingSchedule {
+    pub commences_on: NaiveDate,
     pub events: Vec<OptionGrantVestingEvent>,
 }
 
 impl OptionGrantVestingSchedule {
-    pub fn new(events: Vec<OptionGrantVestingEvent>) -> OptionGrantVestingSchedule {
+    pub fn new(
+        commences_on: NaiveDate,
+        events: Vec<OptionGrantVestingEvent>,
+    ) -> OptionGrantVestingSchedule {
         let mut events = events.clone();
         events.sort_by(|a, b| a.date.cmp(&b.date));
-        OptionGrantVestingSchedule { events }
+        OptionGrantVestingSchedule {
+            commences_on,
+            events,
+        }
     }
 }
 

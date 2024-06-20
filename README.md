@@ -10,5 +10,5 @@ Model equity and generate spreadsheets.
 - [x] RSUs
 - [x] PSP
 - [x] Options
-- [ ] Recognize vesting start date
+- [x] Recognize vesting commencement date
 - [ ] Add "projected" future equity
