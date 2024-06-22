@@ -1,6 +1,5 @@
 /target
 /src/portfolio.rs
-/valuation.csv
-/valuation.ods
-/.~lock.valuation.ods#
-/.~lock.valuation.csv#
+/*.csv
+/*.ods
+/.~lock.*

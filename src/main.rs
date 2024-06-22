@@ -15,8 +15,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    // Generate report of vested, unvested, and total equity value over time
+    /// Generate report of vested, unvested, and total equity value per day
     TotalReport,
+
+    /// Generate report of the equity vesting per quarter
+    IncrementalReport,
 }
 
 fn run_command(command: Command) {
@@ -29,6 +32,15 @@ fn run_command(command: Command) {
             );
 
             valuation.print_to_csv();
+        }
+        Command::IncrementalReport => {
+            let report = report::incr::Report::new(
+                &portfolio::preferred_stock_price(),
+                &portfolio::option_grants(),
+                &portfolio::restricted_stock_grants(),
+            );
+
+            report.print_to_csv();
         }
     }
 }

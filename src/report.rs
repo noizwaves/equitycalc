@@ -1,3 +1,4 @@
+pub mod incr;
 pub mod total;
 
 fn format_currency(cents: i32) -> String {
