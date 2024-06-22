@@ -1,8 +1,10 @@
 use chrono::{Days, NaiveDate};
+use clap::Parser;
 
 mod model;
 mod portfolio;
 
+use clap::Subcommand;
 use model::option::*;
 use model::psp::*;
 use model::rsu::*;
@@ -168,12 +170,35 @@ impl Valuation {
     }
 }
 
-fn main() {
-    let valuation = Valuation::new(
-        &portfolio::preferred_stock_price(),
-        &portfolio::option_grants(),
-        &portfolio::restricted_stock_grants(),
-    );
+#[derive(Parser)]
+#[command()]
+struct Cli {
+    #[clap(subcommand)]
+    command: Command,
+}
 
-    valuation.print_to_csv();
+#[derive(Subcommand)]
+enum Command {
+    // Generate report of vested, unvested, and total equity value over time
+    TotalReport,
+}
+
+fn run_command(command: Command) {
+    match command {
+        Command::TotalReport => {
+            let valuation = Valuation::new(
+                &portfolio::preferred_stock_price(),
+                &portfolio::option_grants(),
+                &portfolio::restricted_stock_grants(),
+            );
+
+            valuation.print_to_csv();
+        }
+    }
+}
+
+fn main() {
+    let args = Cli::parse();
+
+    run_command(args.command);
 }
