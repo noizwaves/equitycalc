@@ -11,9 +11,11 @@ pub struct ReportLine {
     from: NaiveDate,
     to: NaiveDate,
     total: i32,
+    by_grant: Vec<i32>,
 }
 
 pub struct Report {
+    grant_names: Vec<String>,
     lines: Vec<ReportLine>,
 }
 
@@ -71,6 +73,12 @@ impl Report {
         let mut cursor = start_quarter_date;
         let mut lines: Vec<ReportLine> = Vec::new();
 
+        let grant_names = option_grants
+            .iter()
+            .map(|grant| grant.name.clone())
+            .chain(rsu_grants.iter().map(|grant| grant.name.clone()))
+            .collect();
+
         while cursor <= end_quarter_date {
             let from = cursor;
             let to = from
@@ -80,20 +88,8 @@ impl Report {
                 .unwrap();
 
             let mut total = 0;
-            for grant in rsu_grants {
-                let grant_total = &grant
-                    .vesting_schedule
-                    .events
-                    .iter()
-                    .filter(|event| event.date >= from && event.date <= to)
-                    .map(|event| {
-                        let unit_value = psp.value_on(&event.date);
-                        event.number * unit_value
-                    })
-                    .sum();
-                total += grant_total;
-            }
 
+            let mut by_grant: Vec<i32> = Vec::new();
             for grant in option_grants {
                 let grant_total = &grant
                     .vesting_schedule
@@ -106,20 +102,82 @@ impl Report {
                     })
                     .sum();
                 total += grant_total;
+                by_grant.push(*grant_total);
             }
 
-            lines.push(ReportLine { from, to, total });
+            for grant in rsu_grants {
+                let grant_total = &grant
+                    .vesting_schedule
+                    .events
+                    .iter()
+                    .filter(|event| event.date >= from && event.date <= to)
+                    .map(|event| {
+                        let unit_value = psp.value_on(&event.date);
+                        event.number * unit_value
+                    })
+                    .sum();
+                total += grant_total;
+                by_grant.push(*grant_total);
+            }
+
+            lines.push(ReportLine {
+                from,
+                to,
+                total,
+                by_grant,
+            });
 
             cursor = cursor.checked_add_months(Months::new(3)).unwrap();
         }
 
-        Report { lines }
+        Report { grant_names, lines }
     }
 
     pub fn print_to_csv(&self) {
-        println!("Quarter Start,Quarter End,Total");
+        println!(
+            "Quarter Start,Quarter End,{},Total",
+            &self.grant_names.join(",")
+        );
         for line in &self.lines {
-            println!("{},{},{}", line.from, line.to, format_currency(line.total));
+            println!(
+                "{},{},{},{}",
+                line.from,
+                line.to,
+                line.by_grant
+                    .iter()
+                    .map(|v| format_currency(*v))
+                    .collect::<Vec<String>>()
+                    .join(","),
+                format_currency(line.total)
+            );
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_start_of_quarter() {
+        assert_eq!(
+            NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
+            start_of_quarter(&NaiveDate::from_ymd_opt(2023, 12, 31).unwrap())
+        );
+
+        assert_eq!(
+            NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+            start_of_quarter(&NaiveDate::from_ymd_opt(2024, 1, 1).unwrap())
+        );
+
+        assert_eq!(
+            NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+            start_of_quarter(&NaiveDate::from_ymd_opt(2024, 3, 31).unwrap())
+        );
+
+        assert_eq!(
+            NaiveDate::from_ymd_opt(2024, 4, 1).unwrap(),
+            start_of_quarter(&NaiveDate::from_ymd_opt(2024, 4, 1).unwrap())
+        );
     }
 }
