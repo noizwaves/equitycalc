@@ -118,3 +118,75 @@ pub fn load_option_grants() -> Vec<model::option::OptionGrant> {
 
     result.into_iter().map(|g| g.to_model()).collect()
 }
+
+#[derive(Debug, Deserialize)]
+struct RestrictedStockUnitGrant {
+    name: String,
+
+    #[serde(with = "naive_date_format")]
+    date: NaiveDate,
+    grant_value: RestrictedStockUnitGrantValue,
+    vesting_schedule: RestrictedStockUnitVestingSchedule,
+}
+
+impl RestrictedStockUnitGrant {
+    pub fn to_model(&self) -> model::rsu::RestrictedStockUnitGrant {
+        let events = self
+            .vesting_schedule
+            .events
+            .iter()
+            .map(|e| model::rsu::RestrictedStockUnitVestingEvent::new(e.date, e.number))
+            .collect();
+
+        model::rsu::RestrictedStockUnitGrant::new(
+            self.name.clone(),
+            self.date,
+            model::rsu::RestrictedStockUnitValue::new(
+                (self.grant_value.grant_price * 100.0) as i32,
+                (self.grant_value.total_value * 100.0) as i32,
+            ),
+            model::rsu::RestrictedStockUnitVestingSchedule::new(
+                self.vesting_schedule.commences_on,
+                events,
+            ),
+        )
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct RestrictedStockUnitGrantValue {
+    /// Unit price of each RSU in the grant, in dollars.
+    grant_price: f32,
+
+    /// Total value of the grant, in dollars.
+    total_value: f32,
+}
+
+#[derive(Debug, Deserialize)]
+struct RestrictedStockUnitVestingSchedule {
+    #[serde(with = "naive_date_format")]
+    commences_on: NaiveDate,
+    events: Vec<RestrictedStockUnitVestingEvent>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RestrictedStockUnitVestingEvent {
+    #[serde(with = "naive_date_format")]
+    date: NaiveDate,
+    number: i32,
+}
+
+pub fn load_rsu_grants() -> Vec<model::rsu::RestrictedStockUnitGrant> {
+    let grants_path = "rsu_grants.yaml";
+    let grants_path = PathBuf::from(grants_path);
+
+    let contents = fs::read_to_string(grants_path).unwrap();
+
+    let mut result: Vec<RestrictedStockUnitGrant> = Vec::new();
+    for doc in Deserializer::from_str(&contents) {
+        let grant = RestrictedStockUnitGrant::deserialize(doc).unwrap();
+        result.push(grant);
+    }
+
+    result.into_iter().map(|g| g.to_model()).collect()
+}

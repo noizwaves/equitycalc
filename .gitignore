@@ -1,5 +1,4 @@
 /target
-/src/portfolio.rs
 /*.csv
 /*.ods
 /.~lock.*
@@ -7,3 +6,4 @@
 # Portfolio files
 /psp.yaml
 /option_grants.yaml
+/rsu_grants.yaml
