@@ -15,7 +15,6 @@ Model equity and generate spreadsheets.
 - [x] Options
 - [x] Recognize vesting commencement date
 - [x] Use a library for processing commands
-- [ ] Generate a csv of vesting amounts over time, by quarter
-- [ ] Add "projected" future equity
-- [ ] Include "unvested snapshot" on each point of the report
+- [x] Generate a csv of vesting amounts over time, by quarter
+- [ ] Parse portfolio models from YAML
 - [ ] Generate a spreadsheet that is already formatted
