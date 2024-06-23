@@ -41,22 +41,22 @@ impl IncrementalReportArgs {
     }
 }
 
-fn run_command(command: Command) {
+fn run_command(command: Command, portfolio: PortfolioContext) {
     match command {
         Command::TotalReport => {
             let valuation = report::total::Valuation::new(
-                &portfolio::preferred_stock_price(),
-                &portfolio::option_grants(),
-                &portfolio::restricted_stock_grants(),
+                &portfolio.psp,
+                &portfolio.option_grants,
+                &portfolio.rsu_grants,
             );
 
             valuation.print_to_csv();
         }
         Command::IncrementalReport(args) => {
             let report = report::incr::Report::new(
-                &portfolio::preferred_stock_price(),
-                &portfolio::option_grants(),
-                &portfolio::restricted_stock_grants(),
+                &portfolio.psp,
+                &portfolio.option_grants,
+                &portfolio.rsu_grants,
                 args.to_report_options(),
             );
 
@@ -65,8 +65,28 @@ fn run_command(command: Command) {
     }
 }
 
+struct PortfolioContext {
+    psp: model::psp::PreferredStockPrice,
+    option_grants: Vec<model::option::OptionGrant>,
+    rsu_grants: Vec<model::rsu::RestrictedStockUnitGrant>,
+}
+
+fn load_portfolio() -> PortfolioContext {
+    let psp = portfolio::preferred_stock_price();
+    let option_grants = portfolio::option_grants();
+    let rsu_grants = portfolio::restricted_stock_grants();
+
+    PortfolioContext {
+        psp,
+        option_grants,
+        rsu_grants,
+    }
+}
+
 fn main() {
     let args = Cli::parse();
 
-    run_command(args.command);
+    let portfolio = load_portfolio();
+
+    run_command(args.command, portfolio);
 }
