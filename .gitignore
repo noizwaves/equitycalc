@@ -3,3 +3,6 @@
 /*.csv
 /*.ods
 /.~lock.*
+
+# Portfolio files
+/psp.yaml

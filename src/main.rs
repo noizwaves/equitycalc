@@ -1,5 +1,6 @@
 use clap::Parser;
 
+mod dto;
 mod model;
 mod portfolio;
 mod report;
@@ -72,7 +73,7 @@ struct PortfolioContext {
 }
 
 fn load_portfolio() -> PortfolioContext {
-    let psp = portfolio::preferred_stock_price();
+    let psp = dto::load_psp();
     let option_grants = portfolio::option_grants();
     let rsu_grants = portfolio::restricted_stock_grants();
 

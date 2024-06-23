@@ -6,8 +6,23 @@ Model equity and generate spreadsheets.
 > This project is under active development and is highly unstable. Use at your own risk.
 
 ## Getting Started
-1. Implement a Portfolio in `src/portfolio.rs`
+1. Implement a Portfolio in `src/portfolio.rs` and specify a portfolio.
 1. `cargo run`
+
+## Portfolio Specification
+
+A portfolio consists of:
+
+1. A `psp.yaml` file describing the preferred stock price over time. Example:
+    ```yaml
+    ---
+    date: 2020-01-01
+    price: 1.00
+    ---
+    date: 2021-01-01
+    price: 1.75
+    ---
+    ```
 
 ## TODO
 - [x] RSUs
