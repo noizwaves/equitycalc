@@ -49,3 +49,72 @@ pub fn load_psp() -> model::psp::PreferredStockPrice {
     let valuations = result.into_iter().map(|p| p.to_model()).collect();
     model::psp::PreferredStockPrice::new(valuations)
 }
+
+impl OptionGrant {
+    pub fn to_model(&self) -> model::option::OptionGrant {
+        let vesting_events = self
+            .vesting_schedule
+            .events
+            .iter()
+            .map(|e| model::option::OptionGrantVestingEvent::new(e.date, e.number_of_shares))
+            .collect();
+
+        model::option::OptionGrant::new(
+            self.name.clone(),
+            self.date,
+            model::option::OptionGrantValue::new(
+                (self.grant_value.exercise_price * 100.0) as i32,
+                self.grant_value.shares,
+            ),
+            model::option::OptionGrantVestingSchedule::new(
+                self.vesting_schedule.commences_on,
+                vesting_events,
+            ),
+        )
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct OptionGrant {
+    name: String,
+
+    #[serde(with = "naive_date_format")]
+    date: NaiveDate,
+    grant_value: OptionGrantValue,
+    vesting_schedule: OptionGrantVestingSchedule,
+}
+
+#[derive(Debug, Deserialize)]
+struct OptionGrantValue {
+    exercise_price: f32,
+    shares: i32,
+}
+
+#[derive(Debug, Deserialize)]
+struct OptionGrantVestingSchedule {
+    #[serde(with = "naive_date_format")]
+    commences_on: NaiveDate,
+    events: Vec<OptionGrantVestingEvent>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OptionGrantVestingEvent {
+    #[serde(with = "naive_date_format")]
+    date: NaiveDate,
+    number_of_shares: i32,
+}
+
+pub fn load_option_grants() -> Vec<model::option::OptionGrant> {
+    let grants_path = "option_grants.yaml";
+    let grants_path = PathBuf::from(grants_path);
+
+    let contents = fs::read_to_string(grants_path).unwrap();
+
+    let mut result: Vec<OptionGrant> = Vec::new();
+    for doc in Deserializer::from_str(&contents) {
+        let grant = OptionGrant::deserialize(doc).unwrap();
+        result.push(grant);
+    }
+
+    result.into_iter().map(|g| g.to_model()).collect()
+}

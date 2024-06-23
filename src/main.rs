@@ -74,7 +74,7 @@ struct PortfolioContext {
 
 fn load_portfolio() -> PortfolioContext {
     let psp = dto::load_psp();
-    let option_grants = portfolio::option_grants();
+    let option_grants = dto::load_option_grants();
     let rsu_grants = portfolio::restricted_stock_grants();
 
     PortfolioContext {
