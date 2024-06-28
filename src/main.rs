@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Parser;
 
 mod dto;
@@ -44,15 +46,22 @@ impl IncrementalReportArgs {
 fn run_command(command: Command, portfolio: PortfolioContext) {
     match command {
         Command::TotalReport => {
+            let output_file_name = "total.csv";
+
             let valuation = report::total::Valuation::new(
                 &portfolio.psp,
                 &portfolio.option_grants,
                 &portfolio.rsu_grants,
             );
 
-            valuation.print_to_csv();
+            let destination = PathBuf::from(output_file_name);
+            valuation.print_to_file(&destination);
+
+            println!("Wrote total report to {}", output_file_name)
         }
         Command::IncrementalReport(args) => {
+            let output_file_name = "incremental.csv";
+
             let report = report::incr::Report::new(
                 &portfolio.psp,
                 &portfolio.option_grants,
@@ -60,7 +69,10 @@ fn run_command(command: Command, portfolio: PortfolioContext) {
                 args.to_report_options(),
             );
 
-            report.print_to_csv();
+            let destination = PathBuf::from(output_file_name);
+            report.print_to_file(&destination);
+
+            println!("Wrote incremental report to {}", output_file_name);
         }
     }
 }

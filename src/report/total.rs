@@ -1,3 +1,7 @@
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
+
 use chrono::Days;
 use chrono::NaiveDate;
 
@@ -11,9 +15,7 @@ pub struct ValuationItem {
     psp: i32,
     options_vested_total: i32,
     options_unvested_total: i32,
-    rsu_vested_units: i32,
     rsu_vested_total: i32,
-    rsu_unvested_units: i32,
     rsu_unvested_total: i32,
     vested_total: i32,
     unvested_total: i32,
@@ -129,9 +131,7 @@ impl Valuation {
                 options_unvested_total,
                 options_vested_total,
                 rsu_vested_total,
-                rsu_vested_units,
                 rsu_unvested_total,
-                rsu_unvested_units,
                 unvested_total,
                 vested_total,
                 grant_total,
@@ -143,12 +143,14 @@ impl Valuation {
         Valuation { items: days }
     }
 
-    pub fn print_to_csv(&self) {
-        println!("Date,Preferred Stock Price,Options Vested Total, Options Unvested Total, RSUs Vested Total,RSUs Unvested Total,Vested Total,Unvested Total,Grand Total");
+    pub fn print_to_file(&self, output: &PathBuf) {
+        let mut file = File::create(output).unwrap();
+
+        file.write_all(b"Date,Preferred Stock Price,Options Vested Total,Options Unvested Total,RSUs Vested Total,RSUs Unvested Total,Vested Total,Unvested Total,Grand Total\n").unwrap();
 
         for item in &self.items {
-            println!(
-                "{},{},{},{},{},{},{},{},{}",
+            file.write_fmt(format_args!(
+                "{},{},{},{},{},{},{},{},{}\n",
                 item.date,
                 format_currency(item.psp),
                 format_currency(item.options_vested_total),
@@ -158,7 +160,8 @@ impl Valuation {
                 format_currency(item.vested_total),
                 format_currency(item.unvested_total),
                 format_currency(item.grant_total)
-            );
+            ))
+            .unwrap();
         }
     }
 }

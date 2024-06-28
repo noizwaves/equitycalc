@@ -1,3 +1,5 @@
+use std::{fs::File, io::Write, path::PathBuf};
+
 use chrono::{Datelike, Days, Months, NaiveDate};
 
 use crate::{
@@ -188,14 +190,17 @@ impl Report {
         Report { grant_names, lines }
     }
 
-    pub fn print_to_csv(&self) {
-        println!(
-            "Quarter Start,Quarter End,{},Total",
+    pub fn print_to_file(&self, output: &PathBuf) {
+        let mut file = File::create(output).unwrap();
+
+        file.write_fmt(format_args!(
+            "Quarter Start,Quarter End,{},Total\n",
             &self.grant_names.join(",")
-        );
+        ))
+        .unwrap();
         for line in &self.lines {
-            println!(
-                "{},{},{},{}",
+            file.write_fmt(format_args!(
+                "{},{},{},{}\n",
                 line.from,
                 line.to,
                 line.by_grant
@@ -203,8 +208,9 @@ impl Report {
                     .map(|v| format_currency(*v))
                     .collect::<Vec<String>>()
                     .join(","),
-                format_currency(line.total)
-            );
+                format_currency(line.total),
+            ))
+            .unwrap();
         }
     }
 }
