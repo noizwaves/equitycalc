@@ -18,10 +18,17 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     /// Generate report of vested, unvested, and total equity value per day
-    TotalReport,
+    TotalReport(TotalReportArgs),
 
     /// Generate report of the equity vesting per quarter
     IncrementalReport(IncrementalReportArgs),
+}
+
+#[derive(Parser)]
+struct TotalReportArgs {
+    /// Destination file name
+    #[arg(long = "destination", default_value = "total.csv")]
+    pub destination: String,
 }
 
 #[derive(Debug, Parser, Default)]
@@ -29,6 +36,10 @@ struct IncrementalReportArgs {
     /// Use quarters of 12/17-3/16, 3/17-6/16, 6/17-9/16, and 9/17-12/16
     #[arg(long = "skewed", default_value = "false")]
     pub skewed_quarter_dates: bool,
+
+    /// Destination file name
+    #[arg(long = "destination", default_value = "incremental.csv")]
+    pub destination: String,
 }
 
 impl IncrementalReportArgs {
@@ -45,8 +56,8 @@ impl IncrementalReportArgs {
 
 fn run_command(command: Command, portfolio: PortfolioContext) {
     match command {
-        Command::TotalReport => {
-            let output_file_name = "total.csv";
+        Command::TotalReport(args) => {
+            let destination = PathBuf::from(&args.destination);
 
             let valuation = report::total::Valuation::new(
                 &portfolio.psp,
@@ -54,13 +65,12 @@ fn run_command(command: Command, portfolio: PortfolioContext) {
                 &portfolio.rsu_grants,
             );
 
-            let destination = PathBuf::from(output_file_name);
             valuation.print_to_file(&destination);
 
-            println!("Wrote total report to {}", output_file_name)
+            println!("Wrote total report to {:?}", destination)
         }
         Command::IncrementalReport(args) => {
-            let output_file_name = "incremental.csv";
+            let destination = PathBuf::from(&args.destination);
 
             let report = report::incr::Report::new(
                 &portfolio.psp,
@@ -69,10 +79,9 @@ fn run_command(command: Command, portfolio: PortfolioContext) {
                 args.to_report_options(),
             );
 
-            let destination = PathBuf::from(output_file_name);
             report.print_to_file(&destination);
 
-            println!("Wrote incremental report to {}", output_file_name);
+            println!("Wrote incremental report to {:?}", destination);
         }
     }
 }
