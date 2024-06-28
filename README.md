@@ -89,6 +89,7 @@ A portfolio consists of:
 - [x] Use a library for processing commands
 - [x] Generate a csv of vesting amounts over time, by quarter
 - [x] Parse portfolio models from YAML
+- [ ] Add example portfolio
 - [ ] Validate inputs / parsing DTOs can fail
 - [x] Write directly to file
 - [ ] Logging
