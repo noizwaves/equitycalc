@@ -5,10 +5,9 @@ Model equity and generate spreadsheets.
 > [!CAUTION]
 > This project is under active development and is highly unstable. Use at your own risk.
 
-## Getting Started
+## Quick Start
 
 1. [Install Rust](https://rustup.rs/) via `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-1. [Specify a portfolio](#portfolio-specification)
 1. Run `cargo run --portfolio-path examples/acme incremental-report`
 1. Open `incremental.csv`
 
