@@ -38,7 +38,7 @@ To view the report options, run `cargo run incremental-report --help`.
 
 ## Portfolio Specification
 
-> [!INFO]
+> [!TIP]
 > Explore the [example portfolios](./examples/).
 
 A portfolio consists of:
