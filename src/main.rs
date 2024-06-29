@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -13,6 +14,10 @@ use clap::Subcommand;
 struct Cli {
     #[clap(subcommand)]
     command: Command,
+
+    /// Location of portfolio files
+    #[arg(long = "portfolio-path", default_value = ".")]
+    portfolio_path: String,
 }
 
 #[derive(Subcommand)]
@@ -92,10 +97,11 @@ struct PortfolioContext {
     rsu_grants: Vec<model::rsu::RestrictedStockUnitGrant>,
 }
 
-fn load_portfolio() -> PortfolioContext {
-    let psp = dto::load_psp();
-    let option_grants = dto::load_option_grants();
-    let rsu_grants = dto::load_rsu_grants();
+fn load_portfolio(path: &String) -> PortfolioContext {
+    let path = Path::new(path);
+    let psp = dto::load_psp(path);
+    let option_grants = dto::load_option_grants(path);
+    let rsu_grants = dto::load_rsu_grants(path);
 
     PortfolioContext {
         psp,
@@ -107,7 +113,7 @@ fn load_portfolio() -> PortfolioContext {
 fn main() {
     let args = Cli::parse();
 
-    let portfolio = load_portfolio();
+    let portfolio = load_portfolio(&args.portfolio_path);
 
     run_command(args.command, portfolio);
 }

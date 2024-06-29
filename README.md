@@ -6,9 +6,10 @@ Model equity and generate spreadsheets.
 > This project is under active development and is highly unstable. Use at your own risk.
 
 ## Getting Started
+
 1. [Install Rust](https://rustup.rs/) via `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 1. Specify a portfolio (see below)
-1. Run `cargo run incremental-report`
+1. Run `cargo run --portfolio-path examples/acme incremental-report`
 1. Open `incremental.csv`
 
 ## Reports
@@ -36,6 +37,9 @@ Generates an incremental vesting report, showing the value of equity that vests 
 To view the report options, run `cargo run incremental-report --help`.
 
 ## Portfolio Specification
+
+> [!INFO]
+> Explore the [example portfolios](./examples/).
 
 A portfolio consists of:
 
@@ -89,7 +93,7 @@ A portfolio consists of:
 - [x] Use a library for processing commands
 - [x] Generate a csv of vesting amounts over time, by quarter
 - [x] Parse portfolio models from YAML
-- [ ] Add example portfolio
+- [x] Add example portfolio
 - [ ] Validate inputs / parsing DTOs can fail
 - [x] Write directly to file
 - [ ] Logging

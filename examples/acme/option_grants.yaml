@@ -1,0 +1,35 @@
+name: New Hire Grant
+date: 2018-02-01
+grant_value:
+  exercise_price: 0.50
+  shares: 10000
+vesting_schedule:
+  commences_on: 2018-02-10
+  # 4 year vest, quarterly, 1 year cliff
+  events:
+    - date: 2019-02-10
+      number_of_shares: 2500
+    - date: 2019-05-10
+      number_of_shares: 625
+    - date: 2019-08-10
+      number_of_shares: 625
+    - date: 2019-11-10
+      number_of_shares: 625
+    - date: 2020-02-10
+      number_of_shares: 625
+    - date: 2020-05-10
+      number_of_shares: 625
+    - date: 2020-08-10
+      number_of_shares: 625
+    - date: 2020-11-10
+      number_of_shares: 625
+    - date: 2021-02-10
+      number_of_shares: 625
+    - date: 2021-05-10
+      number_of_shares: 625
+    - date: 2021-08-10
+      number_of_shares: 625
+    - date: 2021-11-10
+      number_of_shares: 625
+    - date: 2022-02-10
+      number_of_shares: 625

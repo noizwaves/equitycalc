@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use chrono::NaiveDate;
 use serde::Deserialize;
@@ -34,9 +37,8 @@ impl PreferredStockPrice {
     }
 }
 
-pub fn load_psp() -> model::psp::PreferredStockPrice {
-    let psp_path = "psp.yaml";
-    let psp_path = PathBuf::from(psp_path);
+pub fn load_psp(portfolio_path: &Path) -> model::psp::PreferredStockPrice {
+    let psp_path = portfolio_path.join("psp.yaml");
 
     let contents = fs::read_to_string(psp_path).unwrap();
 
@@ -104,8 +106,8 @@ struct OptionGrantVestingEvent {
     number_of_shares: i32,
 }
 
-pub fn load_option_grants() -> Vec<model::option::OptionGrant> {
-    let grants_path = "option_grants.yaml";
+pub fn load_option_grants(portfolio_path: &Path) -> Vec<model::option::OptionGrant> {
+    let grants_path = portfolio_path.join("option_grants.yaml");
     let grants_path = PathBuf::from(grants_path);
 
     let contents = fs::read_to_string(grants_path).unwrap();
@@ -176,8 +178,8 @@ struct RestrictedStockUnitVestingEvent {
     number: i32,
 }
 
-pub fn load_rsu_grants() -> Vec<model::rsu::RestrictedStockUnitGrant> {
-    let grants_path = "rsu_grants.yaml";
+pub fn load_rsu_grants(portfolio_path: &Path) -> Vec<model::rsu::RestrictedStockUnitGrant> {
+    let grants_path = portfolio_path.join("rsu_grants.yaml");
     let grants_path = PathBuf::from(grants_path);
 
     let contents = fs::read_to_string(grants_path).unwrap();
