@@ -31,7 +31,7 @@ impl PreferredStockPrice {
             .iter()
             .take_while(|valuation| &valuation.date <= date)
             .last()
-            .expect(&format!("No valuation found for {date}"))
+            .unwrap_or_else(|| panic!("No valuation found for {date}"))
             .value_cents
     }
 }

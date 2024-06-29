@@ -99,7 +99,7 @@ impl Valuation {
 
                         // Remove unvested options by adding a negative amount
                         options_unvested_units.push(VestedOptionBundle {
-                            number: -1 * event.number,
+                            number: -event.number,
                             exercise_price: option_grant.value.exercise_price,
                         });
                     }
@@ -126,7 +126,7 @@ impl Valuation {
             let grant_total = unvested_total + vested_total;
 
             days.push(ValuationItem {
-                date: cursor.clone(),
+                date: cursor,
                 psp: psp_on,
                 options_unvested_total,
                 options_vested_total,
