@@ -1,5 +1,9 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
+use anyhow::Context;
 use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_yaml::Deserializer;
@@ -21,6 +25,17 @@ mod naive_date_format {
     }
 }
 
+pub type Result<T> = anyhow::Result<T>;
+
+#[derive(Debug, thiserror::Error)]
+pub enum LoadError {
+    #[error("unable to load file at {0}")]
+    FileLoadFailed(PathBuf),
+
+    #[error("deserialization from expected YAML structure failed")]
+    DeserializationFailed(#[from] serde_yaml::Error),
+}
+
 #[derive(Debug, Deserialize)]
 struct PreferredStockPrice {
     #[serde(with = "naive_date_format")]
@@ -34,19 +49,29 @@ impl PreferredStockPrice {
     }
 }
 
-pub fn load_psp(portfolio_path: &Path) -> model::psp::PreferredStockPrice {
+pub fn load_psp(portfolio_path: &Path) -> Result<model::psp::PreferredStockPrice> {
     let psp_path = portfolio_path.join("psp.yaml");
 
-    let contents = fs::read_to_string(psp_path).unwrap();
+    let contents =
+        fs::read_to_string(&psp_path).map_err(|_| LoadError::FileLoadFailed(psp_path.clone()))?;
 
     let mut result: Vec<PreferredStockPrice> = Vec::new();
     for doc in Deserializer::from_str(&contents) {
-        let psp = PreferredStockPrice::deserialize(doc).unwrap();
+        let psp = PreferredStockPrice::deserialize(doc)
+            .map_err(LoadError::DeserializationFailed)
+            .with_context(|| {
+                format!(
+                    "Preferred Stock Price deserialize failed from {:?}",
+                    &psp_path
+                )
+            })?;
+
         result.push(psp);
     }
 
     let valuations = result.into_iter().map(|p| p.to_model()).collect();
-    model::psp::PreferredStockPrice::new(valuations)
+
+    Ok(model::psp::PreferredStockPrice::new(valuations))
 }
 
 impl OptionGrant {
@@ -103,17 +128,20 @@ struct OptionGrantVestingEvent {
     number_of_shares: i32,
 }
 
-pub fn load_option_grants(portfolio_path: &Path) -> Vec<model::option::OptionGrant> {
+pub fn load_option_grants(portfolio_path: &Path) -> Result<Vec<model::option::OptionGrant>> {
     let grants_path = portfolio_path.join("option_grants.yaml");
-    let contents = fs::read_to_string(grants_path).unwrap();
+    let contents = fs::read_to_string(&grants_path)
+        .map_err(|_| LoadError::FileLoadFailed(grants_path.clone()))?;
 
     let mut result: Vec<OptionGrant> = Vec::new();
     for doc in Deserializer::from_str(&contents) {
-        let grant = OptionGrant::deserialize(doc).unwrap();
+        let grant = OptionGrant::deserialize(doc)
+            .map_err(LoadError::DeserializationFailed)
+            .with_context(|| format!("Options Grant deserialize failed from {:?}", &grants_path))?;
         result.push(grant);
     }
 
-    result.into_iter().map(|g| g.to_model()).collect()
+    Ok(result.into_iter().map(|g| g.to_model()).collect())
 }
 
 #[derive(Debug, Deserialize)]
@@ -173,16 +201,24 @@ struct RestrictedStockUnitVestingEvent {
     number: i32,
 }
 
-pub fn load_rsu_grants(portfolio_path: &Path) -> Vec<model::rsu::RestrictedStockUnitGrant> {
+pub fn load_rsu_grants(portfolio_path: &Path) -> Result<Vec<model::rsu::RestrictedStockUnitGrant>> {
     let grants_path = portfolio_path.join("rsu_grants.yaml");
 
-    let contents = fs::read_to_string(grants_path).unwrap();
+    let contents = fs::read_to_string(&grants_path)
+        .map_err(|_| LoadError::FileLoadFailed(grants_path.clone()))?;
 
     let mut result: Vec<RestrictedStockUnitGrant> = Vec::new();
     for doc in Deserializer::from_str(&contents) {
-        let grant = RestrictedStockUnitGrant::deserialize(doc).unwrap();
+        let grant = RestrictedStockUnitGrant::deserialize(doc)
+            .map_err(LoadError::DeserializationFailed)
+            .with_context(|| {
+                format!(
+                    "Restricted Stock Unit Grant deserialize failed from {:?}",
+                    &grants_path
+                )
+            })?;
         result.push(grant);
     }
 
-    result.into_iter().map(|g| g.to_model()).collect()
+    Ok(result.into_iter().map(|g| g.to_model()).collect())
 }

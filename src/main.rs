@@ -97,23 +97,25 @@ struct PortfolioContext {
     rsu_grants: Vec<model::rsu::RestrictedStockUnitGrant>,
 }
 
-fn load_portfolio(path: &String) -> PortfolioContext {
+fn load_portfolio(path: &String) -> dto::Result<PortfolioContext> {
     let path = Path::new(path);
-    let psp = dto::load_psp(path);
-    let option_grants = dto::load_option_grants(path);
-    let rsu_grants = dto::load_rsu_grants(path);
+    let psp = dto::load_psp(path)?;
+    let option_grants = dto::load_option_grants(path)?;
+    let rsu_grants = dto::load_rsu_grants(path)?;
 
-    PortfolioContext {
+    Ok(PortfolioContext {
         psp,
         option_grants,
         rsu_grants,
-    }
+    })
 }
 
-fn main() {
+fn main() -> Result<(), anyhow::Error> {
     let args = Cli::parse();
 
-    let portfolio = load_portfolio(&args.portfolio_path);
+    let portfolio = load_portfolio(&args.portfolio_path)?;
 
     run_command(args.command, portfolio);
+
+    Ok(())
 }
