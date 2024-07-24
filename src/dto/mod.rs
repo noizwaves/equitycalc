@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::Context;
-use chrono::NaiveDate;
+use chrono::{Months, NaiveDate};
 use serde::Deserialize;
 use serde_yaml::Deserializer;
 
@@ -151,17 +151,20 @@ struct RestrictedStockUnitGrant {
     #[serde(with = "naive_date_format")]
     date: NaiveDate,
     grant_value: RestrictedStockUnitGrantValue,
-    vesting_schedule: RestrictedStockUnitVestingSchedule,
+    vesting: RestrictedStockUnitVesting,
 }
 
 impl RestrictedStockUnitGrant {
     pub fn to_model(&self) -> model::rsu::RestrictedStockUnitGrant {
-        let events = self
-            .vesting_schedule
-            .events
-            .iter()
-            .map(|e| model::rsu::RestrictedStockUnitVestingEvent::new(e.date, e.number))
-            .collect();
+        let events = match &self.vesting.implementation {
+            RestrictedStockUnitVestingDefinition::Events(events) => events
+                .iter()
+                .map(|e| model::rsu::RestrictedStockUnitVestingEvent::new(e.date, e.number))
+                .collect(),
+            RestrictedStockUnitVestingDefinition::Schedule(schedule) => {
+                Self::to_events(schedule, &self.grant_value, &self.vesting.commences_on)
+            }
+        };
 
         model::rsu::RestrictedStockUnitGrant::new(
             self.name.clone(),
@@ -170,11 +173,34 @@ impl RestrictedStockUnitGrant {
                 (self.grant_value.grant_price * 100.0) as i32,
                 (self.grant_value.total_value * 100.0) as i32,
             ),
-            model::rsu::RestrictedStockUnitVestingSchedule::new(
-                self.vesting_schedule.commences_on,
-                events,
-            ),
+            model::rsu::RestrictedStockUnitVestingSchedule::new(self.vesting.commences_on, events),
         )
+    }
+
+    fn to_events(
+        schedule: &RestrictedStockUnitVestingSchedule,
+        value: &RestrictedStockUnitGrantValue,
+        commences_on: &NaiveDate,
+    ) -> Vec<model::rsu::RestrictedStockUnitVestingEvent> {
+        // Impl 1: naive divide
+        let total_units = (value.total_value / value.grant_price).ceil() as i32;
+        let event_length = match schedule.interval {
+            RestrictedStockUnitVestingScheduleInterval::Quarterly => 3,
+        };
+        let count_events = schedule.over.year * 12 / event_length;
+        // TODO: handle remainder
+        let units_per_event = total_units / count_events as i32;
+
+        let mut date = commences_on.clone();
+        let mut events = Vec::new();
+
+        while events.len() < count_events.try_into().unwrap() {
+            date = date.checked_add_months(Months::new(event_length)).unwrap();
+            let event = model::rsu::RestrictedStockUnitVestingEvent::new(date, units_per_event);
+            events.push(event);
+        }
+
+        events
     }
 }
 
@@ -188,10 +214,39 @@ struct RestrictedStockUnitGrantValue {
 }
 
 #[derive(Debug, Deserialize)]
-struct RestrictedStockUnitVestingSchedule {
+struct RestrictedStockUnitVesting {
     #[serde(with = "naive_date_format")]
     commences_on: NaiveDate,
-    events: Vec<RestrictedStockUnitVestingEvent>,
+
+    #[serde(flatten)]
+    implementation: RestrictedStockUnitVestingDefinition,
+}
+
+#[derive(Debug, Deserialize)]
+enum RestrictedStockUnitVestingDefinition {
+    #[serde(rename = "schedule")]
+    Schedule(RestrictedStockUnitVestingSchedule),
+    #[serde(rename = "events")]
+    Events(RestrictedStockUnitVestingEvents),
+}
+
+type RestrictedStockUnitVestingEvents = Vec<RestrictedStockUnitVestingEvent>;
+
+#[derive(Debug, Deserialize)]
+struct RestrictedStockUnitVestingSchedule {
+    interval: RestrictedStockUnitVestingScheduleInterval,
+    over: RestrictedStockUnitVestingScheduleOver,
+}
+
+#[derive(Debug, Deserialize)]
+enum RestrictedStockUnitVestingScheduleInterval {
+    #[serde(rename = "quarterly")]
+    Quarterly,
+}
+
+#[derive(Debug, Deserialize)]
+struct RestrictedStockUnitVestingScheduleOver {
+    year: u32,
 }
 
 #[derive(Debug, Deserialize)]
