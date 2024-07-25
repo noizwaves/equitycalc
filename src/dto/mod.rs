@@ -182,21 +182,23 @@ impl RestrictedStockUnitGrant {
         value: &RestrictedStockUnitGrantValue,
         commences_on: &NaiveDate,
     ) -> Vec<model::rsu::RestrictedStockUnitVestingEvent> {
-        // Impl 1: naive divide
         let total_units = (value.total_value / value.grant_price).ceil() as i32;
         let event_length = match schedule.interval {
             RestrictedStockUnitVestingScheduleInterval::Quarterly => 3,
         };
         let count_events = schedule.over.year * 12 / event_length;
-        // TODO: handle remainder
-        let units_per_event = total_units / count_events as i32;
+        let units_per_event = (total_units as f64) / (count_events as f64);
 
         let mut date = commences_on.clone();
         let mut events = Vec::new();
+        let mut partial_units: f64 = 0.0;
 
         while events.len() < count_events.try_into().unwrap() {
             date = date.checked_add_months(Months::new(event_length)).unwrap();
-            let event = model::rsu::RestrictedStockUnitVestingEvent::new(date, units_per_event);
+            let possible_units = units_per_event + partial_units;
+            let units = possible_units.floor() as i32;
+            partial_units = possible_units - (units as f64);
+            let event = model::rsu::RestrictedStockUnitVestingEvent::new(date, units);
             events.push(event);
         }
 
@@ -276,4 +278,225 @@ pub fn load_rsu_grants(portfolio_path: &Path) -> Result<Vec<model::rsu::Restrict
     }
 
     Ok(result.into_iter().map(|g| g.to_model()).collect())
+}
+
+#[cfg(test)]
+mod test {
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+
+    fn date(year: i32, month: u32, day: u32) -> NaiveDate {
+        NaiveDate::from_ymd_opt(year, month, day).unwrap()
+    }
+
+    #[test]
+    fn test_to_model() {
+        let subject = RestrictedStockUnitGrant {
+            name: "foo".to_string(),
+            date: date(2024, 1, 1),
+            grant_value: RestrictedStockUnitGrantValue {
+                grant_price: 1.00,
+                total_value: 8000.00,
+            },
+            vesting: RestrictedStockUnitVesting {
+                commences_on: date(2024, 1, 1),
+                implementation: RestrictedStockUnitVestingDefinition::Schedule(
+                    RestrictedStockUnitVestingSchedule {
+                        interval: RestrictedStockUnitVestingScheduleInterval::Quarterly,
+                        over: RestrictedStockUnitVestingScheduleOver { year: 2 },
+                    },
+                ),
+            },
+        };
+
+        assert_eq!(
+            model::rsu::RestrictedStockUnitGrant {
+                name: "foo".to_string(),
+                granted_on: date(2024, 1, 1),
+                value: model::rsu::RestrictedStockUnitValue {
+                    grant_price_cents: 100,
+                    total_value_cents: 8_000_00
+                },
+                vesting_schedule: model::rsu::RestrictedStockUnitVestingSchedule {
+                    commences_on: date(2024, 1, 1),
+                    events: vec![
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 4, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 7, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 10, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 1, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 4, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 7, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 10, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2026, 1, 1),
+                            number: 1000
+                        },
+                    ]
+                }
+            },
+            subject.to_model(),
+        );
+    }
+
+    #[test]
+    fn test_to_model_variable_numbers() {
+        let subject = RestrictedStockUnitGrant {
+            name: "foo".to_string(),
+            date: date(2024, 1, 1),
+            grant_value: RestrictedStockUnitGrantValue {
+                grant_price: 1.00,
+                total_value: 8004.00,
+            },
+            vesting: RestrictedStockUnitVesting {
+                commences_on: date(2024, 1, 1),
+                implementation: RestrictedStockUnitVestingDefinition::Schedule(
+                    RestrictedStockUnitVestingSchedule {
+                        interval: RestrictedStockUnitVestingScheduleInterval::Quarterly,
+                        over: RestrictedStockUnitVestingScheduleOver { year: 2 },
+                    },
+                ),
+            },
+        };
+
+        assert_eq!(
+            model::rsu::RestrictedStockUnitGrant {
+                name: "foo".to_string(),
+                granted_on: date(2024, 1, 1),
+                value: model::rsu::RestrictedStockUnitValue {
+                    grant_price_cents: 100,
+                    total_value_cents: 8_004_00
+                },
+                vesting_schedule: model::rsu::RestrictedStockUnitVestingSchedule {
+                    commences_on: date(2024, 1, 1),
+                    events: vec![
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 4, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 7, 1),
+                            number: 1001
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 10, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 1, 1),
+                            number: 1001
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 4, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 7, 1),
+                            number: 1001
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 10, 1),
+                            number: 1000
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2026, 1, 1),
+                            number: 1001
+                        },
+                    ]
+                }
+            },
+            subject.to_model(),
+        );
+    }
+
+    #[test]
+    fn test_to_model_fractional_shares() {
+        let subject = RestrictedStockUnitGrant {
+            name: "foo".to_string(),
+            date: date(2024, 1, 1),
+            grant_value: RestrictedStockUnitGrantValue {
+                grant_price: 100.00,
+                total_value: 7995.00,
+            },
+            vesting: RestrictedStockUnitVesting {
+                commences_on: date(2024, 1, 1),
+                implementation: RestrictedStockUnitVestingDefinition::Schedule(
+                    RestrictedStockUnitVestingSchedule {
+                        interval: RestrictedStockUnitVestingScheduleInterval::Quarterly,
+                        over: RestrictedStockUnitVestingScheduleOver { year: 2 },
+                    },
+                ),
+            },
+        };
+
+        assert_eq!(
+            model::rsu::RestrictedStockUnitGrant {
+                name: "foo".to_string(),
+                granted_on: date(2024, 1, 1),
+                value: model::rsu::RestrictedStockUnitValue {
+                    grant_price_cents: 100_00,
+                    total_value_cents: 7_995_00
+                },
+                vesting_schedule: model::rsu::RestrictedStockUnitVestingSchedule {
+                    commences_on: date(2024, 1, 1),
+                    events: vec![
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 4, 1),
+                            number: 10
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 7, 1),
+                            number: 10
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2024, 10, 1),
+                            number: 10
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 1, 1),
+                            number: 10
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 4, 1),
+                            number: 10
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 7, 1),
+                            number: 10
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2025, 10, 1),
+                            number: 10
+                        },
+                        model::rsu::RestrictedStockUnitVestingEvent {
+                            date: date(2026, 1, 1),
+                            number: 10
+                        },
+                    ]
+                }
+            },
+            subject.to_model(),
+        );
+    }
 }

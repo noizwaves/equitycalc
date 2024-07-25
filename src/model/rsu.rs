@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 
+#[derive(PartialEq, Debug)]
 pub struct RestrictedStockUnitValue {
     pub grant_price_cents: i32,
     pub total_value_cents: i32,
@@ -14,7 +15,7 @@ impl RestrictedStockUnitValue {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct RestrictedStockUnitVestingEvent {
     pub date: NaiveDate,
     pub number: i32,
@@ -26,6 +27,7 @@ impl RestrictedStockUnitVestingEvent {
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub struct RestrictedStockUnitVestingSchedule {
     pub commences_on: NaiveDate,
     pub events: Vec<RestrictedStockUnitVestingEvent>,
@@ -45,6 +47,7 @@ impl RestrictedStockUnitVestingSchedule {
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub struct RestrictedStockUnitGrant {
     pub name: String,
     pub granted_on: NaiveDate,
