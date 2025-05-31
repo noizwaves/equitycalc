@@ -8,7 +8,7 @@ Model equity and generate spreadsheets.
 ## Quick Start
 
 1. [Install Rust](https://rustup.rs/) via `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-1. Run `cargo run --portfolio-path examples/acme incremental-report`
+1. Run `cargo run -- --portfolio-path examples/acme incremental-report`
 1. Open `incremental.csv`
 
 Next, try [describing your own portfolio](#portfolio-specification).
@@ -25,7 +25,7 @@ cargo run total-report
 
 Generates a daily portfolio total report saved to `total.csv`. Report is broken down by vested/unvested and options/RSUs.
 
-To view the report options, run `cargo run total-report --help`.
+To view the report options, run `cargo run -- total-report --help`.
 
 ### Incremental Report
 
@@ -35,7 +35,7 @@ cargo run incremental-report
 
 Generates an incremental vesting report, showing the value of equity that vests per quarter. Report is saved to `incremental.csv`. The vesting amount is broken down by grant and quarter.
 
-To view the report options, run `cargo run incremental-report --help`.
+To view the report options, run `cargo run -- incremental-report --help`.
 
 ## Portfolio Specification
 
